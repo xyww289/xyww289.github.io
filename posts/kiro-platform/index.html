@@ -29,7 +29,7 @@
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
         mermaid.initialize({ 
             startOnLoad: true,
-            theme: 'forest'
+            theme: 'dark'
         });
     </script>
 
@@ -40,7 +40,7 @@
             margin: 20px 0;
         }
         .architecture-table th, .architecture-table td {
-            border: 1px solid #ddd;
+            border: 1px solid #444;
             padding: 12px;
             text-align: left;
         }
@@ -49,7 +49,10 @@
             color: white;
         }
         .architecture-table tr:nth-child(even) {
-            background-color: #f9f9f9;
+            background-color: rgba(255,255,255,0.05);
+        }
+        .architecture-table tr:nth-child(odd) {
+            background-color: rgba(255,255,255,0.02);
         }
         .metrics-box {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -84,7 +87,7 @@
             margin: 30px 0;
         }
         .mermaid {
-            background: #f5f5f5;
+            background: #2d2d2d;
             padding: 20px;
             border-radius: 8px;
         }
@@ -112,11 +115,11 @@
         .json-comment { color: #6a9955; font-style: italic; }
         /* API endpoint styling */
         h4 code, p code {
-            background: #e8e8e8;
+            background: #3d3d3d;
             padding: 2px 6px;
             border-radius: 4px;
             font-family: 'Fira Code', monospace;
-            color: #c7254e;
+            color: #ff6b6b;
         }
         .api-method {
             display: inline-block;
@@ -523,7 +526,7 @@ graph TB
                 
                 <h4>GET /v1/subscriptions/{user_id}</h4>
                 <p>Get current subscription status and entitlements</p>
-                <pre style="background:#f5f5f5;padding:15px;border-radius:8px;overflow-x:auto;"><code>{
+                <pre ><code>{
   "subscription_id": "sub_abc123",
   "user_id": "usr_xyz789",
   "plan": "PRO",
@@ -547,7 +550,7 @@ graph TB
 
                 <h4>POST /v1/subscriptions</h4>
                 <p>Create new subscription (called after Stripe checkout)</p>
-                <pre style="background:#f5f5f5;padding:15px;border-radius:8px;overflow-x:auto;"><code>// Request
+                <pre ><code>// Request
 {
   "user_id": "usr_xyz789",
   "plan_id": "PRO",
@@ -564,7 +567,7 @@ graph TB
 
                 <h4>POST /v1/subscriptions/{subscription_id}/cancel</h4>
                 <p>Cancel subscription (end of billing period)</p>
-                <pre style="background:#f5f5f5;padding:15px;border-radius:8px;overflow-x:auto;"><code>// Request
+                <pre ><code>// Request
 {
   "cancel_at_period_end": true,
   "reason": "too_expensive"
@@ -581,7 +584,7 @@ graph TB
 
                 <h4>POST /v1/usage/record</h4>
                 <p>Record usage event (called by Runtime Service after each LLM request)</p>
-                <pre style="background:#f5f5f5;padding:15px;border-radius:8px;overflow-x:auto;"><code>// Request
+                <pre ><code>// Request
 {
   "user_id": "usr_xyz789",
   "event_type": "CHAT",
@@ -608,7 +611,7 @@ graph TB
 
                 <h4>GET /v1/usage/{user_id}/summary</h4>
                 <p>Get usage summary for billing period</p>
-                <pre style="background:#f5f5f5;padding:15px;border-radius:8px;overflow-x:auto;"><code>{
+                <pre ><code>{
   "user_id": "usr_xyz789",
   "period": {
     "start": "2026-02-01T00:00:00Z",
@@ -647,7 +650,7 @@ graph TB
 
                 <h4>GET /v1/usage/{user_id}/check-quota</h4>
                 <p>Real-time quota check (called before each request)</p>
-                <pre style="background:#f5f5f5;padding:15px;border-radius:8px;overflow-x:auto;"><code>{
+                <pre ><code>{
   "allowed": true,
   "quotas": {
     "agent": {
@@ -671,7 +674,7 @@ graph TB
 
                 <h4>POST /v1/webhooks/stripe</h4>
                 <p>Handle Stripe events for subscription lifecycle</p>
-                <pre style="background:#f5f5f5;padding:15px;border-radius:8px;overflow-x:auto;"><code>// Handled Events:
+                <pre ><code>// Handled Events:
 - customer.subscription.created    → Create subscription record
 - customer.subscription.updated    → Update plan/status
 - customer.subscription.deleted    → Mark as canceled
