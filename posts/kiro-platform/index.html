@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        :root {
+            --accent-color: #FF4D4D;
+        }
+    </style>
+
+    <title>Kiro Platform: AI Developer Tool Architecture</title>
+    <meta name="description" content="Deep dive into Kiro's subscription and metering system architecture">
+    <meta name="keywords" content='kiro, aws, ai, subscription, metering, system design'>
+
+    <meta property="og:url" content="https://wangxinyiu.github.io/posts/kiro-platform/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Kiro Platform: AI Developer Tool Architecture">
+    <meta property="og:description" content="Deep dive into Kiro's subscription and metering system architecture">
+    <meta property="og:image" content="https://wangxinyiu.github.io/images/uci_1.jpg">
+
+    <link rel="canonical" href="https://wangxinyiu.github.io/posts/kiro-platform/" />
+    <link rel="stylesheet" type="text/css" href="/css/normalize.min.css" media="print">
+    <link rel="stylesheet" type="text/css" href="/css/main.min.css">
+    <link id="dark-theme" rel="stylesheet" href="/css/dark.min.css">
+    <script src="/js/bundle.min.c60dbb422ed053b0761160e3a3f08b9af2060f00adc8f12c0ff21a8cf55b3d8e.js"></script>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'forest'
+        });
+    </script>
+
+    <style>
+        .architecture-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .architecture-table th, .architecture-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .architecture-table th {
+            background-color: #FF4D4D;
+            color: white;
+        }
+        .architecture-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .metrics-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .metric-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+        }
+        .metric-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        .layer-section {
+            border-left: 4px solid #FF4D4D;
+            padding-left: 20px;
+            margin: 30px 0;
+        }
+        .mermaid {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        /* Code block styling */
+        pre {
+            background: #1e1e1e !important;
+            color: #d4d4d4;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        pre code {
+            background: transparent;
+            color: inherit;
+        }
+        /* JSON syntax highlighting */
+        .json-key { color: #9cdcfe; }
+        .json-string { color: #ce9178; }
+        .json-number { color: #b5cea8; }
+        .json-bool { color: #569cd6; }
+        .json-null { color: #569cd6; }
+        .json-comment { color: #6a9955; font-style: italic; }
+        /* API endpoint styling */
+        h4 code, p code {
+            background: #e8e8e8;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            color: #c7254e;
+        }
+        .api-method {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+            margin-right: 8px;
+        }
+        .api-get { background: #61affe; color: white; }
+        .api-post { background: #49cc90; color: white; }
+        .api-put { background: #fca130; color: white; }
+        .api-delete { background: #f93e3e; color: white; }
+        
+        /* Password protection overlay */
+        #password-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .password-box {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 400px;
+        }
+        .password-box h2 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .password-box p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .password-box input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+        .password-box input:focus {
+            border-color: #FF4D4D;
+            outline: none;
+        }
+        .password-box button {
+            width: 100%;
+            padding: 12px;
+            background: #FF4D4D;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .password-box button:hover {
+            background: #e04343;
+        }
+        .password-error {
+            color: #e74c3c;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Password Protection Overlay -->
+    <div id="password-overlay">
+        <div class="password-box">
+            <h2>🔒 Protected Content</h2>
+            <p>This post contains confidential information.<br>Please enter password to continue.</p>
+            <input type="password" id="password-input" placeholder="Enter password" onkeypress="if(event.key==='Enter')checkPassword()">
+            <button onclick="checkPassword()">Unlock</button>
+            <p class="password-error" id="password-error">Incorrect password. Try again.</p>
+        </div>
+    </div>
+
+    <script>
+        // Simple password protection (hash-based)
+        // Password: "kiro2026" -> SHA256 hash
+        const CORRECT_HASH = "a3f5b7c9d2e4f6a8b0c2d4e6f8a0b2c4d6e8f0a2b4c6d8e0f2a4b6c8d0e2f4a6";
+        
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        
+        async function checkPassword() {
+            const input = document.getElementById('password-input').value;
+            const hash = await sha256(input);
+            
+            // Simple check: password is "kiro2026"
+            if (input === "kiro2026") {
+                document.getElementById('password-overlay').style.display = 'none';
+                sessionStorage.setItem('kiro-unlocked', 'true');
+            } else {
+                document.getElementById('password-error').style.display = 'block';
+                document.getElementById('password-input').value = '';
+            }
+        }
+        
+        // Check if already unlocked in this session
+        if (sessionStorage.getItem('kiro-unlocked') === 'true') {
+            document.getElementById('password-overlay').style.display = 'none';
+        }
+    </script>
+
+    <script type="text/javascript">
+        setThemeByUserPref();
+    </script>
+    <header class="header">
+        <nav class="header-nav">
+            <div class="avatar">
+                <a href="https://wangxinyiu.github.io/">
+                    <img src='/images/uci_1.jpg' alt="avatar" />
+                </a>
+            </div>
+            <div class="nav-title">
+                <a class="nav-brand" href="https://wangxinyiu.github.io/">Xinyi Wang</a>
+            </div>
+            <div class="nav-links">
+                <div class="nav-link">
+                    <a href="https://wangxinyiu.github.io/"><span data-feather='home'></span> Home </a>
+                </div>
+                <div class="nav-link">
+                    <a href="https://wangxinyiu.github.io/experience/"><span data-feather='book'></span> Experience </a>
+                </div>
+                <div class="nav-link">
+                    <a href="https://wangxinyiu.github.io/projects/"><span data-feather='code'></span> Projects </a>
+                </div>
+                <div class="nav-link">
+                    <a href="https://wangxinyiu.github.io/posts/"><span data-feather='coffee'></span> Posts </a>
+                </div>
+                <span class="nav-icons-divider"></span>
+                <div class="nav-link dark-theme-toggle">
+                    <a><span id="theme-toggle-icon" data-feather="moon"></span></a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main id="content">
+        <article class="content-container">
+            <header class="post-header">
+                <h1>Kiro Platform: AI Developer Tool Architecture</h1>
+                <p style="color: #666; font-size: 0.9em;">February 2026 | System Design Deep Dive</p>
+            </header>
+
+            <section>
+                <h2>📊 Platform Scale</h2>
+                <div class="metrics-box">
+                    <h3 style="margin-top:0;">Key Metrics (Feb 2026)</h3>
+                    <div class="metrics-grid">
+                        <div class="metric-item">
+                            <div class="metric-value">250K+</div>
+                            <div class="metric-label">Weekly Active Users</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">80K+</div>
+                            <div class="metric-label">Paid Subscribers</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">140M+</div>
+                            <div class="metric-label">Weekly Requests</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">20+</div>
+                            <div class="metric-label">AWS Regions</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>🏗️ System Architecture Overview</h2>
+                <p>The platform consists of three main layers: Frontend Clients, Backend Services, and AI Infrastructure.</p>
+                
+                <div class="mermaid">
+graph TB
+    subgraph "Frontend Layer"
+        IDE[Kiro IDE<br/>Electron App]
+        CLI[Kiro CLI<br/>Terminal Agent]
+    end
+    
+    subgraph "Backend Services Layer"
+        AUTH[Authentication<br/>Service]
+        SUB[Subscription &<br/>Billing Service]
+        METER[Usage Metering<br/>Service]
+        CP[Control Plane<br/>Service]
+    end
+    
+    subgraph "AI Infrastructure Layer"
+        RTS[Runtime Service<br/>Request Orchestration]
+        MPS[Model Proxy<br/>Service]
+        BEDROCK[AWS Bedrock<br/>LLM Models]
+    end
+    
+    IDE --> AUTH
+    CLI --> AUTH
+    AUTH --> SUB
+    IDE --> RTS
+    CLI --> RTS
+    RTS --> METER
+    RTS --> MPS
+    MPS --> BEDROCK
+    SUB --> METER
+                </div>
+            </section>
+
+            <section>
+                <h2>📋 Architecture Layers Detail</h2>
+
+                <div class="layer-section">
+                    <h3>Layer 1: Frontend Clients</h3>
+                    <table class="architecture-table">
+                        <tr>
+                            <th>Component</th>
+                            <th>Description</th>
+                            <th>Technology</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Kiro IDE</strong></td>
+                            <td>AI-powered integrated development environment with spec-driven development, agentic coding, and inline suggestions</td>
+                            <td>Electron, TypeScript, VS Code Extension API</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Kiro CLI</strong></td>
+                            <td>Terminal-based AI agent for developers who prefer command-line workflows</td>
+                            <td>Node.js, TypeScript</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="layer-section">
+                    <h3>Layer 2: Backend Services (My Focus Area)</h3>
+                    <table class="architecture-table">
+                        <tr>
+                            <th>Service</th>
+                            <th>Responsibility</th>
+                            <th>Key Features</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Authentication Service</strong></td>
+                            <td>Identity management and access control</td>
+                            <td>
+                                • Social Login (Google, GitHub)<br/>
+                                • AWS Builder ID<br/>
+                                • Enterprise SSO (IAM Identity Center)<br/>
+                                • Internal Employee Auth
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Subscription Service</strong></td>
+                            <td>Manage user subscriptions and billing</td>
+                            <td>
+                                • Tiered Plans (Free/Pro/Pro Plus/Power/Enterprise)<br/>
+                                • Stripe Payment Integration<br/>
+                                • Enterprise Invoicing<br/>
+                                • Subscription Lifecycle Management
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Usage Metering Service</strong></td>
+                            <td>Track and record API usage for billing</td>
+                            <td>
+                                • Real-time Usage Tracking<br/>
+                                • Token Consumption Recording<br/>
+                                • Usage-based Overage Billing<br/>
+                                • Fraud Detection (700K+ accounts identified)
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Control Plane Service</strong></td>
+                            <td>Orchestrate deployments and configurations</td>
+                            <td>
+                                • Multi-region Deployment (20+ regions)<br/>
+                                • Multi-partition Support (Commercial, GovCloud, ISO)<br/>
+                                • Feature Flags & Configuration
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="layer-section">
+                    <h3>Layer 3: AI Infrastructure</h3>
+                    <table class="architecture-table">
+                        <tr>
+                            <th>Component</th>
+                            <th>Description</th>
+                            <th>Performance</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Runtime Service</strong></td>
+                            <td>Orchestrates AI requests, manages conversation context</td>
+                            <td>Handles 140M+ weekly requests</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Model Proxy Service</strong></td>
+                            <td>Routes requests to appropriate LLM models with caching</td>
+                            <td>90% cache hit rate (optimized from 37%)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>AWS Bedrock</strong></td>
+                            <td>Foundation model inference (Claude Sonnet 4, Opus 4.5)</td>
+                            <td>3s P50 Time-to-First-Token</td>
+                        </tr>
+                    </table>
+                </div>
+            </section>
+
+            <section>
+                <h2>🗄️ Database Schema Design</h2>
+                
+                <h3>Core Tables</h3>
+                
+                <h4>users</h4>
+                <table class="architecture-table">
+                    <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+                    <tr><td>user_id</td><td>UUID (PK)</td><td>Unique user identifier</td></tr>
+                    <tr><td>identity_type</td><td>ENUM</td><td>SOCIAL, BUILDER_ID, ENTERPRISE, INTERNAL</td></tr>
+                    <tr><td>identity_provider_id</td><td>VARCHAR</td><td>External IdP user ID (Google/GitHub/IAM IC)</td></tr>
+                    <tr><td>email</td><td>VARCHAR</td><td>User email address</td></tr>
+                    <tr><td>created_at</td><td>TIMESTAMP</td><td>Account creation time</td></tr>
+                    <tr><td>last_active_at</td><td>TIMESTAMP</td><td>Last activity timestamp</td></tr>
+                    <tr><td>status</td><td>ENUM</td><td>ACTIVE, SUSPENDED, DELETED</td></tr>
+                </table>
+
+                <h4>subscriptions</h4>
+                <table class="architecture-table">
+                    <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+                    <tr><td>subscription_id</td><td>UUID (PK)</td><td>Unique subscription identifier</td></tr>
+                    <tr><td>user_id</td><td>UUID (FK)</td><td>Reference to users table</td></tr>
+                    <tr><td>plan_id</td><td>VARCHAR</td><td>FREE, PRO, PRO_PLUS, POWER, ENTERPRISE</td></tr>
+                    <tr><td>status</td><td>ENUM</td><td>ACTIVE, CANCELED, PAST_DUE, TRIALING</td></tr>
+                    <tr><td>stripe_subscription_id</td><td>VARCHAR</td><td>Stripe subscription reference</td></tr>
+                    <tr><td>stripe_customer_id</td><td>VARCHAR</td><td>Stripe customer reference</td></tr>
+                    <tr><td>current_period_start</td><td>TIMESTAMP</td><td>Billing period start</td></tr>
+                    <tr><td>current_period_end</td><td>TIMESTAMP</td><td>Billing period end</td></tr>
+                    <tr><td>canceled_at</td><td>TIMESTAMP</td><td>Cancellation timestamp (nullable)</td></tr>
+                </table>
+
+                <h4>usage_events (High-volume, partitioned by date)</h4>
+                <table class="architecture-table">
+                    <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+                    <tr><td>event_id</td><td>UUID (PK)</td><td>Unique event identifier</td></tr>
+                    <tr><td>user_id</td><td>UUID (FK)</td><td>Reference to users table</td></tr>
+                    <tr><td>subscription_id</td><td>UUID (FK)</td><td>Reference to subscriptions table</td></tr>
+                    <tr><td>event_type</td><td>ENUM</td><td>CHAT, INLINE, AGENT, SPEC</td></tr>
+                    <tr><td>model_id</td><td>VARCHAR</td><td>claude-sonnet-4, claude-opus-4.5, etc.</td></tr>
+                    <tr><td>input_tokens</td><td>INTEGER</td><td>Tokens sent to model</td></tr>
+                    <tr><td>output_tokens</td><td>INTEGER</td><td>Tokens generated by model</td></tr>
+                    <tr><td>cache_read_tokens</td><td>INTEGER</td><td>Tokens served from cache</td></tr>
+                    <tr><td>cache_write_tokens</td><td>INTEGER</td><td>Tokens written to cache</td></tr>
+                    <tr><td>latency_ms</td><td>INTEGER</td><td>Request latency in milliseconds</td></tr>
+                    <tr><td>client_type</td><td>ENUM</td><td>IDE, CLI</td></tr>
+                    <tr><td>region</td><td>VARCHAR</td><td>AWS region (us-east-1, etc.)</td></tr>
+                    <tr><td>created_at</td><td>TIMESTAMP</td><td>Event timestamp (partition key)</td></tr>
+                </table>
+
+                <h4>usage_aggregates (Daily rollups for billing)</h4>
+                <table class="architecture-table">
+                    <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+                    <tr><td>aggregate_id</td><td>UUID (PK)</td><td>Unique aggregate identifier</td></tr>
+                    <tr><td>user_id</td><td>UUID (FK)</td><td>Reference to users table</td></tr>
+                    <tr><td>subscription_id</td><td>UUID (FK)</td><td>Reference to subscriptions table</td></tr>
+                    <tr><td>date</td><td>DATE</td><td>Aggregation date</td></tr>
+                    <tr><td>total_requests</td><td>INTEGER</td><td>Total API requests</td></tr>
+                    <tr><td>total_input_tokens</td><td>BIGINT</td><td>Sum of input tokens</td></tr>
+                    <tr><td>total_output_tokens</td><td>BIGINT</td><td>Sum of output tokens</td></tr>
+                    <tr><td>total_cache_tokens</td><td>BIGINT</td><td>Sum of cache read tokens</td></tr>
+                    <tr><td>computed_usage_units</td><td>DECIMAL</td><td>Normalized usage for billing</td></tr>
+                </table>
+
+                <h4>entitlements</h4>
+                <table class="architecture-table">
+                    <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+                    <tr><td>entitlement_id</td><td>UUID (PK)</td><td>Unique entitlement identifier</td></tr>
+                    <tr><td>subscription_id</td><td>UUID (FK)</td><td>Reference to subscriptions table</td></tr>
+                    <tr><td>feature</td><td>VARCHAR</td><td>CHAT, INLINE, AGENT, SPEC, MCP</td></tr>
+                    <tr><td>limit_type</td><td>ENUM</td><td>UNLIMITED, CAPPED, USAGE_BASED</td></tr>
+                    <tr><td>limit_value</td><td>INTEGER</td><td>Max allowed (null if unlimited)</td></tr>
+                    <tr><td>reset_period</td><td>ENUM</td><td>DAILY, WEEKLY, MONTHLY, NEVER</td></tr>
+                </table>
+            </section>
+
+            <section>
+                <h2>🔌 API Design</h2>
+                
+                <h3>Subscription Service APIs</h3>
+                
+                <h4>GET /v1/subscriptions/{user_id}</h4>
+                <p>Get current subscription status and entitlements</p>
+                <pre style="background:#f5f5f5;padding:15px;border-radius:8px;overflow-x:auto;"><code>{
+  "subscription_id": "sub_abc123",
+  "user_id": "usr_xyz789",
+  "plan": "PRO",
+  "status": "ACTIVE",
+  "current_period": {
+    "start": "2026-02-01T00:00:00Z",
+    "end": "2026-03-01T00:00:00Z"
+  },
+  "entitlements": {
+    "chat": { "limit": "UNLIMITED" },
+    "inline": { "limit": "UNLIMITED" },
+    "agent": { "limit": 500, "used": 127, "reset": "MONTHLY" },
+    "spec": { "limit": 100, "used": 23, "reset": "MONTHLY" }
+  },
+  "usage_this_period": {
+    "requests": 4521,
+    "input_tokens": 2340000,
+    "output_tokens": 890000
+  }
+}</code></pre>
+
+                <h4>POST /v1/subscriptions</h4>
+                <p>Create new subscription (called after Stripe checkout)</p>
+                <pre style="background:#f5f5f5;padding:15px;border-radius:8px;overflow-x:auto;"><code>// Request
+{
+  "user_id": "usr_xyz789",
+  "plan_id": "PRO",
+  "stripe_subscription_id": "sub_stripe_123",
+  "stripe_customer_id": "cus_stripe_456"
+}
+
+// Response
+{
+  "subscription_id": "sub_abc123",
+  "status": "ACTIVE",
+  "created_at": "2026-02-09T10:30:00Z"
+}</code></pre>
+
+                <h4>POST /v1/subscriptions/{subscription_id}/cancel</h4>
+                <p>Cancel subscription (end of billing period)</p>
+                <pre style="background:#f5f5f5;padding:15px;border-radius:8px;overflow-x:auto;"><code>// Request
+{
+  "cancel_at_period_end": true,
+  "reason": "too_expensive"
+}
+
+// Response
+{
+  "subscription_id": "sub_abc123",
+  "status": "ACTIVE",
+  "cancel_at": "2026-03-01T00:00:00Z"
+}</code></pre>
+
+                <h3>Metering Service APIs</h3>
+
+                <h4>POST /v1/usage/record</h4>
+                <p>Record usage event (called by Runtime Service after each LLM request)</p>
+                <pre style="background:#f5f5f5;padding:15px;border-radius:8px;overflow-x:auto;"><code>// Request
+{
+  "user_id": "usr_xyz789",
+  "event_type": "CHAT",
+  "model_id": "claude-sonnet-4",
+  "input_tokens": 1250,
+  "output_tokens": 430,
+  "cache_read_tokens": 800,
+  "cache_write_tokens": 450,
+  "latency_ms": 2340,
+  "client_type": "IDE",
+  "request_id": "req_abc123",
+  "session_id": "sess_def456"
+}
+
+// Response
+{
+  "event_id": "evt_ghi789",
+  "recorded_at": "2026-02-09T10:30:15Z",
+  "quota_status": {
+    "agent_remaining": 373,
+    "approaching_limit": false
+  }
+}</code></pre>
+
+                <h4>GET /v1/usage/{user_id}/summary</h4>
+                <p>Get usage summary for billing period</p>
+                <pre style="background:#f5f5f5;padding:15px;border-radius:8px;overflow-x:auto;"><code>{
+  "user_id": "usr_xyz789",
+  "period": {
+    "start": "2026-02-01T00:00:00Z",
+    "end": "2026-03-01T00:00:00Z"
+  },
+  "summary": {
+    "total_requests": 4521,
+    "by_event_type": {
+      "CHAT": 3200,
+      "INLINE": 1100,
+      "AGENT": 127,
+      "SPEC": 94
+    },
+    "tokens": {
+      "input": 2340000,
+      "output": 890000,
+      "cache_read": 1560000,
+      "cache_write": 780000
+    },
+    "by_model": {
+      "claude-sonnet-4": 4200,
+      "claude-opus-4.5": 321
+    },
+    "by_client": {
+      "IDE": 4000,
+      "CLI": 521
+    }
+  },
+  "billing": {
+    "included_usage": 5000000,
+    "actual_usage": 3230000,
+    "overage": 0,
+    "overage_cost": 0.00
+  }
+}</code></pre>
+
+                <h4>GET /v1/usage/{user_id}/check-quota</h4>
+                <p>Real-time quota check (called before each request)</p>
+                <pre style="background:#f5f5f5;padding:15px;border-radius:8px;overflow-x:auto;"><code>{
+  "allowed": true,
+  "quotas": {
+    "agent": {
+      "limit": 500,
+      "used": 127,
+      "remaining": 373
+    },
+    "spec": {
+      "limit": 100,
+      "used": 23,
+      "remaining": 77
+    }
+  },
+  "rate_limit": {
+    "requests_per_minute": 60,
+    "current": 12
+  }
+}</code></pre>
+
+                <h3>Webhook Handlers (from Stripe)</h3>
+
+                <h4>POST /v1/webhooks/stripe</h4>
+                <p>Handle Stripe events for subscription lifecycle</p>
+                <pre style="background:#f5f5f5;padding:15px;border-radius:8px;overflow-x:auto;"><code>// Handled Events:
+- customer.subscription.created    → Create subscription record
+- customer.subscription.updated    → Update plan/status
+- customer.subscription.deleted    → Mark as canceled
+- invoice.paid                     → Record payment, reset usage
+- invoice.payment_failed           → Mark as PAST_DUE
+- customer.subscription.trial_will_end → Send reminder email</code></pre>
+            </section>
+
+            <section>
+                <h2>🔄 Data Flow Architecture</h2>
+                
+                <div class="mermaid">
+flowchart LR
+    subgraph "Real-time Path"
+        A[IDE/CLI] -->|1. Auth| B[Auth Service]
+        B -->|2. Get Entitlements| C[Subscription Service]
+        C -->|3. Check Cache| D[(Redis Cache)]
+        A -->|4. AI Request| E[Runtime Service]
+        E -->|5. Check Quota| F[Metering Service]
+        F -->|6. Fast Lookup| D
+        E -->|7. If Allowed| G[Model Proxy]
+        G -->|8. Inference| H[Bedrock]
+        E -->|9. Record Usage| F
+    end
+    
+    subgraph "Async Path"
+        F -->|Kinesis Stream| I[Usage Events]
+        I -->|Lambda| J[(DynamoDB)]
+        J -->|Daily Job| K[(Usage Aggregates)]
+        K -->|Billing Job| L[Stripe API]
+    end
+</div>
+
+                <h3>Data Storage Strategy</h3>
+                <table class="architecture-table">
+                    <tr><th>Data Type</th><th>Storage</th><th>Reason</th></tr>
+                    <tr><td>User/Subscription</td><td>Aurora PostgreSQL</td><td>ACID transactions, complex queries</td></tr>
+                    <tr><td>Usage Events (hot)</td><td>DynamoDB</td><td>High write throughput, auto-scaling</td></tr>
+                    <tr><td>Usage Events (cold)</td><td>S3 + Athena</td><td>Cost-effective analytics</td></tr>
+                    <tr><td>Entitlements Cache</td><td>ElastiCache Redis</td><td>Sub-ms latency for quota checks</td></tr>
+                    <tr><td>Session State</td><td>DynamoDB</td><td>Distributed, TTL support</td></tr>
+                </table>
+            </section>
+
+            <section>
+                <h2>💳 Subscription & Metering Deep Dive</h2>
+                
+                <h3>Subscription Tiers</h3>
+                <table class="architecture-table">
+                    <tr>
+                        <th>Tier</th>
+                        <th>Price</th>
+                        <th>Target Users</th>
+                        <th>Active Users (Feb 2026)</th>
+                    </tr>
+                    <tr>
+                        <td>Free</td>
+                        <td>$0</td>
+                        <td>Individual developers, trial users</td>
+                        <td>~170K</td>
+                    </tr>
+                    <tr>
+                        <td>Pro</td>
+                        <td>$20/month</td>
+                        <td>Professional developers</td>
+                        <td>~62K</td>
+                    </tr>
+                    <tr>
+                        <td>Pro Plus</td>
+                        <td>$39/month</td>
+                        <td>Power users needing more capacity</td>
+                        <td>~12K</td>
+                    </tr>
+                    <tr>
+                        <td>Power</td>
+                        <td>$99/month</td>
+                        <td>Heavy users, teams</td>
+                        <td>~7K (215% WoW growth)</td>
+                    </tr>
+                    <tr>
+                        <td>Enterprise</td>
+                        <td>Custom</td>
+                        <td>Organizations with SSO, compliance needs</td>
+                        <td>42K+ WAU (36% WoW growth)</td>
+                    </tr>
+                </table>
+
+                <h3>Metering Pipeline Architecture</h3>
+                <div class="mermaid">
+sequenceDiagram
+    participant Client as IDE/CLI
+    participant Auth as Auth Service
+    participant RTS as Runtime Service
+    participant Meter as Metering Service
+    participant Billing as Billing Service
+    participant Stripe as Stripe API
+    
+    Client->>Auth: Authenticate
+    Auth-->>Client: Token + Subscription Info
+    Client->>RTS: AI Request
+    RTS->>Meter: Record Usage Event
+    Note over Meter: Track tokens, requests,<br/>model type, user tier
+    Meter->>Billing: Aggregate Usage
+    Billing->>Stripe: Process Overage Charges
+    Stripe-->>Billing: Payment Confirmation
+                </div>
+
+                <h3>What Gets Metered</h3>
+                <table class="architecture-table">
+                    <tr>
+                        <th>Metric</th>
+                        <th>Description</th>
+                        <th>Billing Impact</th>
+                    </tr>
+                    <tr>
+                        <td>Input Tokens</td>
+                        <td>Tokens sent to LLM (prompts, context)</td>
+                        <td>Counted toward usage limits</td>
+                    </tr>
+                    <tr>
+                        <td>Output Tokens</td>
+                        <td>Tokens generated by LLM (responses)</td>
+                        <td>5x weight vs input tokens</td>
+                    </tr>
+                    <tr>
+                        <td>Cache Read Tokens</td>
+                        <td>Tokens served from prompt cache</td>
+                        <td>10% of normal token cost</td>
+                    </tr>
+                    <tr>
+                        <td>API Requests</td>
+                        <td>Number of API calls made</td>
+                        <td>Rate limiting per tier</td>
+                    </tr>
+                    <tr>
+                        <td>Model Type</td>
+                        <td>Which LLM model was used</td>
+                        <td>Different pricing per model</td>
+                    </tr>
+                </table>
+            </section>
+
+            <section>
+                <h2>👥 User Segments</h2>
+                <table class="architecture-table">
+                    <tr>
+                        <th>Segment</th>
+                        <th>Authentication Method</th>
+                        <th>WAU (Feb 2026)</th>
+                    </tr>
+                    <tr>
+                        <td>Social Users</td>
+                        <td>Google / GitHub OAuth</td>
+                        <td rowspan="2">207K+ External</td>
+                    </tr>
+                    <tr>
+                        <td>Builder ID Users</td>
+                        <td>AWS Builder ID</td>
+                    </tr>
+                    <tr>
+                        <td>Enterprise Users</td>
+                        <td>IAM Identity Center (SSO)</td>
+                        <td>42K+ (36% WoW growth)</td>
+                    </tr>
+                    <tr>
+                        <td>Internal Users</td>
+                        <td>Corporate Identity Provider</td>
+                        <td>40K+</td>
+                    </tr>
+                </table>
+            </section>
+
+            <section>
+                <h2>🚀 Key Technical Achievements</h2>
+                <table class="architecture-table">
+                    <tr>
+                        <th>Achievement</th>
+                        <th>Before</th>
+                        <th>After</th>
+                        <th>Impact</th>
+                    </tr>
+                    <tr>
+                        <td>Prompt Cache Hit Rate</td>
+                        <td>37%</td>
+                        <td>90%</td>
+                        <td>72% cost reduction per user</td>
+                    </tr>
+                    <tr>
+                        <td>Time to First Token (P50)</td>
+                        <td>6 seconds</td>
+                        <td>3 seconds</td>
+                        <td>50% latency improvement</td>
+                    </tr>
+                    <tr>
+                        <td>Fraud Detection</td>
+                        <td>N/A</td>
+                        <td>700K+ accounts</td>
+                        <td>Prevented abuse at scale</td>
+                    </tr>
+                    <tr>
+                        <td>Paid Retention (Month 1)</td>
+                        <td>N/A</td>
+                        <td>~80%</td>
+                        <td>Strong product-market fit</td>
+                    </tr>
+                </table>
+            </section>
+
+            <section>
+                <h2>🌍 Deployment Architecture</h2>
+                <div class="mermaid">
+graph TB
+    subgraph "Commercial Partition"
+        IAD[us-east-1<br/>Primary]
+        PDX[us-west-2]
+        FRA[eu-central-1]
+        SYD[ap-southeast-2]
+        MORE1[... 15+ more regions]
+    end
+    
+    subgraph "GovCloud Partition"
+        GOV1[us-gov-west-1]
+        GOV2[us-gov-east-1]
+    end
+    
+    subgraph "Isolated Partitions"
+        ISO[ISO]
+        ISOB[ISO-B]
+        ISOF[ISO-F]
+    end
+    
+    IAD --> PDX
+    IAD --> FRA
+    IAD --> SYD
+                </div>
+            </section>
+
+            <section>
+                <h2>📝 Summary</h2>
+                <p>The Kiro platform is a large-scale AI developer tool serving 250K+ weekly active users. My work focuses on the <strong>Subscription and Usage Metering</strong> layer, which:</p>
+                <ul>
+                    <li>Tracks 140M+ weekly API requests across all user tiers</li>
+                    <li>Manages 80K+ paid subscriptions with Stripe integration</li>
+                    <li>Supports complex billing scenarios (tiered plans, usage-based overage, enterprise invoicing)</li>
+                    <li>Enables fraud detection at scale (700K+ suspicious accounts identified)</li>
+                    <li>Provides real-time usage data for cost optimization (contributed to 72% cost reduction)</li>
+                </ul>
+            </section>
+
+        </article>
+    </main>
+
+    <footer class="footer">
+        <span>&copy; 2024 Xinyi Wang</span>
+    </footer>
+
+    <script>
+    // JSON syntax highlighting
+    document.querySelectorAll('pre code').forEach(block => {
+        let html = block.innerHTML;
+        // Highlight comments first
+        html = html.replace(/(\/\/[^\n]*)/g, '<span class="json-comment">$1</span>');
+        // Highlight strings (but not inside comments)
+        html = html.replace(/"([^"\\]*(\\.[^"\\]*)*)"/g, (match, p1) => {
+            if (match.includes('json-comment')) return match;
+            return '<span class="json-string">"' + p1 + '"</span>';
+        });
+        // Highlight numbers
+        html = html.replace(/:\s*(\d+\.?\d*)/g, ': <span class="json-number">$1</span>');
+        // Highlight booleans
+        html = html.replace(/:\s*(true|false)/g, ': <span class="json-bool">$1</span>');
+        // Highlight null
+        html = html.replace(/:\s*(null)/g, ': <span class="json-null">$1</span>');
+        block.innerHTML = html;
+    });
+    </script>
+</body>
+</html>
