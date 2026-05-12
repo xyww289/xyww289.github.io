@@ -2,44 +2,44 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Projects on Xinyi Wang</title>
-    <link>https://wangxinyiu.github.io/projects/</link>
+    <link>https://xyww289.github.io/projects/</link>
     <description>Recent content in Projects on Xinyi Wang</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <atom:link href="https://wangxinyiu.github.io/projects/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://xyww289.github.io/projects/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>A Server Migration to AWS (Internship at Amazon)</title>
-      <link>https://wangxinyiu.github.io/projects/amazonintern/</link>
+      <link>https://xyww289.github.io/projects/amazonintern/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      <guid>https://wangxinyiu.github.io/projects/amazonintern/</guid>
+      <guid>https://xyww289.github.io/projects/amazonintern/</guid>
       <description>Trasanction Stroage &amp;amp; Config Team&#xA;Introdunction What I did Motivation Result High-level Design Challengest Details decouple的好处 Step function的好处 Why Stepfunction rather than EC2? Why do I plan to use AWS CDK instead of CloudFormation? How do I make sure the code quality? Introdunction Achieve the workflow(BatchMoveEndpoint) in AWS and demonstrate the server(SableManagementServer) can be implemented in Native AWS.&#xA;PDF: [Proof of Conceop] SableManagementServer BatchMoveEndpoints in NAWS: Design Doc&#xA;What I did Migrated the BatchMoveEndpoint (BME) workflow to AWS, ensuring full implementation of SableManagementServer (SMS) within the native AWS environment, which reduced 128 maintenance tickets annually.</description>
     </item>
     <item>
       <title>A travel planning app based on Google Maps and TripAdvisor</title>
-      <link>https://wangxinyiu.github.io/projects/bsmartrip/</link>
+      <link>https://xyww289.github.io/projects/bsmartrip/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      <guid>https://wangxinyiu.github.io/projects/bsmartrip/</guid>
+      <guid>https://xyww289.github.io/projects/bsmartrip/</guid>
       <description>Presentation Slides Link&#xA;Catalogs&#xA;Introdunction STAR1 -&amp;gt; Rapid API Star2 -&amp;gt; Priority classfication Details 后端开发文档 RestAPI ER diagram Flow Chart Design Picture Introdunction 在我的前一段工作中，我担任后端API开发的关键角色，负责实现和维护应用程序的核心后端功能。这包括但不限于用户注册、认证以及数据检索和管理等多个方面。&#xA;在用户注册方面，我主要负责使用Spring Security框架来实现基于Token的安全系统。通过这个框架，我创建了一个自定义的认证流程，它能够在用户注册时生成一个安全的Token，并在用户登录时进行验证。这个Token是通过安全算法加密的，并且每次请求都需要携带它来确保用户身份的合法性。使用Spring Security使得整个认证过程不仅安全，而且可维护性和扩展性也非常好，为应用提供了坚固的安全基础。&#xA;我还负责集成了第三方API，如RapidAPI中的Travel Advisor，为规划合理路线功能提供数据支持。这项工作不仅需要理解外部API的工作原理，还需要处理数据同步和异常管理，以确保用户能够获取到准确和及时的旅行建议。&#xA;至于数据的搜索和下载功能，我使用了elastic search去构建，其可以允许用户根据多个维度进行筛选，使得数据检索既高效又精确。&#xA;在这一过程中，我与前端团队紧密合作，确保了API设计的前后端一致性，以及响应性能的优化。通过不断的沟通和迭代，我们共同提升了整个应用程序的稳定性和用户体验。&#xA;这些工作的成果不仅体现在直接的用户反馈上，也在于后端服务的稳定性和可扩展性方面。我为能够支持团队并助力前端功能的实现和业务需求的扩展而感到自豪。&#xA;STAR1 -&amp;gt; Rapid API 情境 (Situation) 在开发一个需要大量旅游信息的项目初期，我们计划使用TripAdvisor的API来获取数据。这个API的成本是平均每个月$350，但它的rate limit是每小时1000次请求，这对于我们的需求来说既昂贵又效率低下。&#xA;任务 (Task) 鉴于成本和效率的双重挑战，我的任务是找到一个更经济高效的解决方案，以支持我们的项目需求，同时不牺牲所需的数据质量和访问频率。&#xA;行动 (Action) 为了解决这个问题，我开始寻找替代的API服务。通过广泛的市场调研，我在Rapid API平台上找到了一个名为&amp;quot;Travel Advisor&amp;quot;的API。它提供了更符合我们预算和性能需求的服务条件：免费支持每月500次请求，同时其rate limit为每秒5次请求。我对比了两个API提供的服务内容、数据质量和使用条款，确保&amp;quot;Travel Advisor&amp;quot;能满足我们的项目需求。&#xA;结果 (Result) 选择&amp;quot;Travel Advisor&amp;quot;API后，我们的团队在接下来的三个月内节省了$1050的成本，同时获得了更高效的数据访问能力。这个决策不仅优化了我们的项目预算，还提高了开发效率，确保项目能够在资源有限的情况下顺利进行。&#xA;通过这个经历，我学会了如何有效地评估技术解决方案的成本效益，并且能够灵活调整计划以适应项目需求和预算限制。这个经验也强化了我的研究能力和决策制定能力。&#xA;Star2 -&amp;gt; Priority classfication Situation: I used to lead a team to finish a full-stack web development within one month.</description>
     </item>
     <item>
       <title>Cat and Dog Recognition Based on CNN Convolutional Neural Network</title>
-      <link>https://wangxinyiu.github.io/projects/catdogrecognition/</link>
+      <link>https://xyww289.github.io/projects/catdogrecognition/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      <guid>https://wangxinyiu.github.io/projects/catdogrecognition/</guid>
+      <guid>https://xyww289.github.io/projects/catdogrecognition/</guid>
       <description>Here is PDF: Cat and Dog Recognition Based on CNN Convolutional Neural Network</description>
     </item>
     <item>
       <title>PapyrusAI - An tool for use in higher education courses</title>
-      <link>https://wangxinyiu.github.io/projects/papyrusai/</link>
+      <link>https://xyww289.github.io/projects/papyrusai/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      <guid>https://wangxinyiu.github.io/projects/papyrusai/</guid>
+      <guid>https://xyww289.github.io/projects/papyrusai/</guid>
       <description>About PapyrusAI was developed by the Digital Learning Lab at the University of California, Irvine, in partnership with the Samueli School of Engineering, as part of an NSF grant (#23152984).&#xA;While our initial goal is to develop this tool for use in higher education courses, we received a Proof of Product grant from UCI’s Beall Applied Innovation Center to adapt the tool for secondary school and determine the marketability and feasibility of commercializing PapyrusAI.</description>
     </item>
     <item>
       <title>StayBooking - An online stay rental application</title>
-      <link>https://wangxinyiu.github.io/projects/staybooking/</link>
+      <link>https://xyww289.github.io/projects/staybooking/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      <guid>https://wangxinyiu.github.io/projects/staybooking/</guid>
+      <guid>https://xyww289.github.io/projects/staybooking/</guid>
       <description>What I did Backend Structure Data Model Compelete Code Challenge Elastic Search(Star) elastic search 实现步骤简述 用Google cloud storage（GCS）存储照片等流媒体 为什么elastic search的全局搜索能力这么强呢？ Potential areas of improvement What I did Deomo: https://recordit.co/cXdWcj0ahV&#xA;Designed and built a single-page web application using React. Bootstrap the development with mature component library Ant Design. Implemented the backend services based on Spring Boot to support stay upload, delete, search, and reserve functionality. Used MySQL to store user-generated data, e.</description>
     </item>
   </channel>

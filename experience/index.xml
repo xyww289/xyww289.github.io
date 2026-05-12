@@ -2,10 +2,10 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Experience on Xinyi Wang</title>
-    <link>https://wangxinyiu.github.io/experience/</link>
+    <link>https://xyww289.github.io/experience/</link>
     <description>Recent content in Experience on Xinyi Wang</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <atom:link href="https://wangxinyiu.github.io/experience/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://xyww289.github.io/experience/index.xml" rel="self" type="application/rss+xml" />
   </channel>
 </rss>
